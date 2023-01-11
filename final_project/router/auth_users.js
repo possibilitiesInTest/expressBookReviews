@@ -1,11 +1,12 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const session = require('express-session')
-const routes = require('./router/friends.js')
+let books = require("./booksdb.js");
+const regd_users = express.Router();
+
 
 let users = []
 
-const doesExist = (username)=>{
+const isValid = (username)=>{
   let userswithsamename = users.filter((user)=>{
     return user.username === username
   });
@@ -27,30 +28,7 @@ const authenticatedUser = (username,password)=>{
   }
 }
 
-const app = express();
-
-app.use(session({secret:"fingerpint"},resave=true,saveUninitialized=true));
-
-app.use(express.json());
-
-app.use("/friends", function auth(req,res,next){
-   if(req.session.authorization) {
-       token = req.session.authorization['accessToken'];
-       jwt.verify(token, "access",(err,user)=>{
-           if(!err){
-               req.user = user;
-               next();
-           }
-           else{
-               return res.status(403).json({message: "User not authenticated"})
-           }
-        });
-    } else {
-        return res.status(403).json({message: "User not logged in"})
-    }
-});
-
-app.post("/login", (req,res) => {
+regd_users.post("/login", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
 
@@ -72,24 +50,29 @@ app.post("/login", (req,res) => {
   }
 });
 
-app.post("/register", (req,res) => {
-  const username = req.body.username;
-  const password = req.body.password;
+regd_users.put("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn
+	  const review = req.body.review
+	if (books[isbn]) {
+		let book = books[isbn]
+		book.reviews[review] = review
+		return res.status(200).send('Review posted')
+	} else {
+		return res.status(404).json({message: `ISBN ${isbn} not found`})
+	}
+})
 
-  if (username && password) {
-    if (!doesExist(username)) { 
-      users.push({"username":username,"password":password});
-      return res.status(200).json({message: "User successfully registred. Now you can login"});
-    } else {
-      return res.status(404).json({message: "User already exists!"});    
+regd_users.delete("/auth/review/:isbn", (req, res) => { 
+    let username = req.session.authorization.username;
+    let isbn = req.params.isbn;
+    if(isbn){
+      delete books[isbn].reviews[username];
     }
-  } 
-  return res.status(404).json({message: "Unable to register user."});
-});
+    res.send(`User ${username} review on book with ISBN ${isbn} successfully deleted.`);
+  })
 
 
-const PORT =5000;
+module.exports.authenticated = regd_users;
+module.exports.isValid = isValid;
+module.exports.users = users;
 
-app.use("/friends", routes);
-
-app.listen(PORT,()=>console.log("Server is running"));
