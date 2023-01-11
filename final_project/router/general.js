@@ -32,9 +32,24 @@ public_users.get('/', async function (req, res) {
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
- });
+        const isbn = req.params.isbn;
+        for(var i = 0; i < Object.keys(books).length; i++){
+            if(books[Objects.keys(books)[i]['isbn'] == isbn]){
+                let newPromise = new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve(books[Object.keys(books)[i]])
+                    }, 6000 )
+                    foundTitle.then((successMessage) => {
+                        res.send("From callback" + successMessage)
+                    })
+                })} else {
+                    
+                let newPromise = newPromise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve("Title not found")
+                    }, 6000 )})
+                    res.send("From callback" + successMessage)
+                }}})
   
 // Get book details based on author
 public_users.get('/author/:author', async function (req, res) {
@@ -58,7 +73,7 @@ public_users.get('/title/:title',function (req, res) {
                     })
                 })} else {
                     
-                let newPromise = newPromise((resolve, reject) => {
+                let newPromise = new Promise((resolve, reject) => {
                     setTimeout(() => {
                         resolve("Title not found")
                     }, 6000 )})
